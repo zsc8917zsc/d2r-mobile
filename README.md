@@ -93,7 +93,7 @@ This is not a gamepad pasted onto the screen. Every panel and every action was r
 
 ### Controller
 
-Connect a controller and press any button: the interface switches to the original controller layout, with button prompts at the bottom of every panel. Touch the screen and you are back in the touch interface instantly. Inventory, stash, skill tree, Chronicle and settings are fully controller-navigable, with the same button mapping as on Switch. With an Xbox controller the layout switches automatically to the PC / Xbox one (bottom confirms, right goes back) and the prompts show Xbox button icons; there is nothing to turn on.
+Connect a controller and press any button: the interface switches to the original controller layout, with button prompts at the bottom of every panel. Touch the screen and you are back in the touch interface instantly. Inventory, stash, skill tree, Chronicle and settings are fully controller-navigable, with the same button mapping as on Switch. With an Xbox controller the layout switches automatically to the PC / Xbox one (bottom confirms, right goes back) and the prompts show Xbox button icons; there is nothing to turn on. With a PlayStation controller (DualSense or DualShock 4) the prompts switch to the game's own PlayStation button icons (✕ confirms, ○ goes back), contributed by [@Ti800](https://github.com/Ti800) ([#119](https://github.com/jhaizhou-ops/d2r-mobile/pull/119)).
 
 <p align="center">
   <img src="https://github.com/jhaizhou-ops/d2r-mobile/releases/download/assets/en_pad_combat.jpg" width="49%" alt="Combat with a controller connected">
@@ -149,6 +149,7 @@ Enter through the red portal in Harrogath after completing Hell. There are 100 l
 | Minimap guidance | Every map marks its Waypoint and exits; every quest goal is on the map; when a target is off screen, its name is written along the screen edge |
 | Chores removed | Free identification, free Town Portal with no scrolls needed, spawning right beside the Waypoint, Quick Restart, refreshable vendor stock |
 | Saves | Saved immediately when you switch apps, swipe the app away or quit; iCloud sync across devices (requires signing with a paid developer account) |
+| Entertainment mode (experimental) | Over-the-shoulder and first-person camera: drag the right half to look around, arrows for monsters off the picture, a facing pointer on the map ([details](docs/over-the-shoulder-camera.md); contributed with [@yyan160](https://github.com/yyan160), [#165](https://github.com/jhaizhou-ops/d2r-mobile/pull/165)) |
 
 Most features can be toggled one by one in game under Options → Custom.
 

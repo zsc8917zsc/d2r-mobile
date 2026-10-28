@@ -93,7 +93,7 @@ Esto no es un mando pegado sobre la pantalla. Cada panel y cada acción se rehic
 
 ### Mando
 
-Conecta un mando y pulsa cualquier botón: la interfaz cambia a la distribución original para mando, con indicaciones de botones en la parte inferior de cada panel. Toca la pantalla y vuelves al instante a la interfaz táctil. El inventario, el alijo (Stash), el árbol de habilidades, la Chronicle y los ajustes se pueden manejar por completo con el mando, con la misma asignación de botones que en Switch. Con un mando de Xbox, la asignación cambia sola a la de la versión de PC / Xbox (abajo confirma, derecha vuelve atrás) y las indicaciones muestran los iconos de botones de Xbox; no hay que activar nada.
+Conecta un mando y pulsa cualquier botón: la interfaz cambia a la distribución original para mando, con indicaciones de botones en la parte inferior de cada panel. Toca la pantalla y vuelves al instante a la interfaz táctil. El inventario, el alijo (Stash), el árbol de habilidades, la Chronicle y los ajustes se pueden manejar por completo con el mando, con la misma asignación de botones que en Switch. Con un mando de Xbox, la asignación cambia sola a la de la versión de PC / Xbox (abajo confirma, derecha vuelve atrás) y las indicaciones muestran los iconos de botones de Xbox; no hay que activar nada. Con un mando de PlayStation (DualSense o DualShock 4), las indicaciones cambian a los iconos de PlayStation del propio juego (✕ confirma, ○ vuelve atrás); lo aportó [@Ti800](https://github.com/Ti800) ([#119](https://github.com/jhaizhou-ops/d2r-mobile/pull/119)).
 
 <p align="center">
   <img src="https://github.com/jhaizhou-ops/d2r-mobile/releases/download/assets/en_pad_combat.jpg" width="49%" alt="Combate con un mando conectado">
@@ -149,6 +149,7 @@ Se entra por el portal rojo de Harrogath tras completar Infierno. Hay 100 nivele
 | Guía en el minimapa | Cada mapa marca su Waypoint y sus salidas; cada objetivo de misión aparece en el mapa; cuando un objetivo está fuera de la pantalla, su nombre se escribe a lo largo del borde |
 | Tareas tediosas eliminadas | Identificación gratuita, Town Portal gratuito sin necesidad de pergaminos, aparición justo al lado del Waypoint, Quick Restart, mercancía de los vendedores renovable |
 | Partidas guardadas | Se guardan de inmediato al cambiar de app, al cerrarla deslizando o al salir; sincronización por iCloud entre dispositivos (requiere firmar con una cuenta de desarrollador de pago) |
+| Modo de entretenimiento (experimental) | Cámara sobre el hombro y en primera persona: arrastra la mitad derecha para mirar alrededor, flechas para los monstruos fuera de la imagen y un indicador de orientación en el mapa ([detalles](docs/over-the-shoulder-camera.md); con [@yyan160](https://github.com/yyan160), [#165](https://github.com/jhaizhou-ops/d2r-mobile/pull/165)) |
 
 La mayoría de las funciones se pueden activar o desactivar una por una en el juego, en Options → Custom.
 

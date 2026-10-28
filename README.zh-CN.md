@@ -93,7 +93,7 @@ iPhone 与 iPad 共用一个安装包。
 
 ### 手柄
 
-接上手柄、按任意键，界面自动换成原版手柄布局，每个面板底部带按键提示；碰一下屏幕，立刻回到触屏界面。物品栏、储藏箱、技能树、编年史、设置页全程手柄可操作，键位与 Switch 一致。接的是 Xbox 手柄时会自动换成 PC / Xbox 版的键位（下确认、右返回），按键提示也换成 Xbox 的图标，不用去设置里开。
+接上手柄、按任意键，界面自动换成原版手柄布局，每个面板底部带按键提示；碰一下屏幕，立刻回到触屏界面。物品栏、储藏箱、技能树、编年史、设置页全程手柄可操作，键位与 Switch 一致。接的是 Xbox 手柄时会自动换成 PC / Xbox 版的键位（下确认、右返回），按键提示也换成 Xbox 的图标，不用去设置里开。接的是 PlayStation 手柄（DualSense 或 DualShock 4）时，按键提示自动换成游戏原版的 PS 图标（✕ 确认、○ 返回），由 [@Ti800](https://github.com/Ti800) 贡献（[#119](https://github.com/jhaizhou-ops/d2r-mobile/pull/119)）。
 
 <p align="center">
   <img src="https://github.com/jhaizhou-ops/d2r-mobile/releases/download/assets/pad_game.jpg" width="49%" alt="接手柄时的界面">
@@ -149,6 +149,7 @@ iPhone 与 iPad 共用一个安装包。
 | 小地图指引 | 每张地图标出小站和出入口；所有任务终点上图；目标在画面外时贴着屏幕边写名字 |
 | 省掉的琐事 | 鉴定免费、回城免费、进局直接落在传送小站旁、一键重开、商人货架可刷新 |
 | 存档 | 切后台、划掉、退出都立刻存盘；iCloud 多设备同步（需要付费开发者账号签名） |
+| 娱乐模式（实验） | 越肩视角与第一人称：右半屏拖动看四周、画面外怪物指针、地图上的人物朝向指针（[说明](docs/over-the-shoulder-camera.zh-CN.md)；与 [@yyan160](https://github.com/yyan160) 合作，[#165](https://github.com/jhaizhou-ops/d2r-mobile/pull/165)） |
 
 多数功能能在游戏里「选项 → 自定义」页逐项开关。
 

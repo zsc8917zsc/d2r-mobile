@@ -194,16 +194,16 @@ JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeStart(JNIEnv *env
     // on the Redmi K50 Ultra camp GPU -0.5 ms and live image memory 827 -> 320 MB.
     setenv("DM_GFX_NATIVE_BC", "1", 0);
     // 片元着色器的四元组邻居交换改用精细导数（引擎的 gfx-quad-derivatives；标记文件仍优先）：Adreno 上辅助调用在子组洗牌里取到垃圾，
-    // 罪恶洞穴打斗时单位周围出现黑方块。
+    // 罪恶洞穴打斗时单位周围出现黑方块。Adreno 740/750 上引擎缺省关掉它（那两个驱动会丢掉设备，见 xbg_adreno_policy.h）。
     // Fragment-shader quad-neighbour shuffles go through fine derivatives (the engine's gfx-quad-derivatives; a marker file
     // still wins): on Adreno helper invocations read garbage in subgroup shuffles, and black squares appeared around units in
-    // the Den of Evil fight.
+    // the Den of Evil fight. On Adreno 740/750 the engine defaults it off (those drivers drop the device; see xbg_adreno_policy.h).
     setenv("DM_GFX_QUAD_DERIVATIVES", "1", 0);
     // 按 32 道线程束翻译的计算着色器，在 64 道的子组里每 32 道各当一个线程束（引擎的 gfx-warp32；标记文件仍优先）：Adreno 上
-    // 杂物、草地、流体与 PPR 着色器的线程束聚合追加丢了 32–63 号车道、条目互相覆盖。
+    // 杂物、草地、流体与 PPR 着色器的线程束聚合追加丢了 32–63 号车道、条目互相覆盖。Adreno 740/750 上引擎缺省关掉它。
     // Compute shaders translated for 32-lane warps run every 32 lanes of a 64-lane subgroup as their own warp (the engine's
     // gfx-warp32; a marker file still wins): on Adreno the clutter, grass, fluid and PPR shaders' warp-aggregated appends lost
-    // lanes 32-63 and overwrote entries.
+    // lanes 32-63 and overwrote entries. On Adreno 740/750 the engine defaults it off.
     setenv("DM_GFX_WARP32", "1", 0);
     // 翻译器输出的两项等价整理（引擎的 gfx-ldc-fold 与 gfx-forward-temps；标记文件仍优先）：常量缓冲区按字寻址时可推出的分量下标
     // 换成常量，只写一次的临时变量直接转发。Redmi K50 Ultra 营地（比例 0.75）GPU 每帧 15.70 → 14.34 ms，结果不变。
@@ -312,6 +312,31 @@ JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeStart(JNIEnv *env
 }
 
 static ANativeWindow *g_win;
+// 越肩镜头的体感转向（dm/host/dm_cam.c、CamSensor.java）：开哪种传感器（0 = 不开），以及每次转动的弧度（正 = 往画面右边转）
+// Sensor steering of the over-the-shoulder camera (dm/host/dm_cam.c, CamSensor.java): which sensor to listen to (0 = none), and each turn in radians
+// (positive = towards the right of the picture)
+int dm_cam_sensor_mode(void); void dm_cam_turn(float rad); int dm_cam_mode(void); int dm_cam_on(void);
+JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeCamSensor(JNIEnv *env, jclass cls) { (void)env; (void)cls; return dm_cam_sensor_mode(); }
+// 镜头档（DM_CAM，nativeStart 读进环境之后才准）与「此刻在局里、镜头在出图」（CamButtons 据此显示左右转按钮）
+// The camera mode (DM_CAM, valid only after nativeStart has loaded the environment) and "in a game right now with the camera drawing" (CamButtons shows the
+// turn buttons by it)
+JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeCamMode(JNIEnv *env, jclass cls) { (void)env; (void)cls; return dm_cam_mode(); }
+JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeCamActive(JNIEnv *env, jclass cls) { (void)env; (void)cls; return dm_cam_on(); }
+// 画面外的怪（dm_cam.c dm_cam_threats）：每条 5 个数（屏幕 x、y、箭头方向、紧迫度、档位），返回条数；CamThreats 每帧取一次
+// Monsters off the picture (dm_cam.c dm_cam_threats): 5 numbers each (screen x, y, arrow direction, urgency, tier), returns the count; CamThreats takes them
+// once per frame
+int dm_cam_threats(float *out, int max);
+JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeCamThreats(JNIEnv *env, jclass cls, jfloatArray out) {
+    (void)cls; jsize len = (*env)->GetArrayLength(env, out); float buf[16 * 5]; int max = len / 5 < 16 ? len / 5 : 16;
+    int n = dm_cam_threats(buf, max); if (n > 0) (*env)->SetFloatArrayRegion(env, out, 0, n * 5, buf); return n; }
+// 小地图上的朝向箭头（dm_cam.c dm_cam_map_heading）：4 个数（中心 x、y、箭头方向、小地图框高），返回 1 = 该画；CamThreats 每帧取一次
+// Heading arrow on the minimap (dm_cam.c dm_cam_map_heading): 4 numbers (centre x, y, arrow direction, minimap frame height), returns 1 = draw it;
+// CamThreats takes it once per frame
+int dm_cam_map_heading(float out[4]);
+JNIEXPORT jint JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeCamHeading(JNIEnv *env, jclass cls, jfloatArray out) {
+    (void)cls; float buf[4]; if ((*env)->GetArrayLength(env, out) < 4 || !dm_cam_map_heading(buf)) return 0;
+    (*env)->SetFloatArrayRegion(env, out, 0, 4, buf); return 1; }
+JNIEXPORT void JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeCamTurn(JNIEnv *env, jclass cls, jfloat rad) { (void)env; (void)cls; dm_cam_turn(rad); }
 JNIEXPORT void JNICALL Java_com_xiaoboluo_d2r_DmActivity_nativeRefresh(JNIEnv *env, jclass cls, jfloat hz) {
     (void)env; (void)cls;
     front_android_set_refresh(hz);

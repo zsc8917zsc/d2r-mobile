@@ -55,6 +55,7 @@ Players do not build the Android version: they install the APK from the release 
 |---|---|---|
 | astcenc | Converting textures for older devices without BC texture support (A16 and earlier); built from source — how to build it and the whole procedure are in [LEGACY_DEVICES.md](LEGACY_DEVICES.md). We use v5.2.0 | <https://github.com/ARM-software/astc-encoder> |
 | hactool | Needed by `dm/tools/extract_game.sh` to extract files from your game package; not needed if your game files are already prepared some other way. We tested with upstream commit `1d64a83` | <https://github.com/SciresM/hactool> |
+| FFmpeg | Optional VP8 cutscene playback, off by default; default builds and our release packages do not contain it. Mac (`MOVIE_FFMPEG=1`): `brew install ffmpeg pkg-config`. iOS (`DM_MOVIE_FFMPEG=1`): `dm/ios/tools/build_ffmpeg_ios.sh` downloads the official FFmpeg 7.1.1 source tarball from ffmpeg.org, checks its SHA-256 and builds static libraries with only the Matroska demuxer, VP8 decoder and swscale; see [dm/host/MOVIE.md](../dm/host/MOVIE.md). License: that configuration does not enable GPL or non-free parts, so the libraries are LGPL 2.1 or later; the Homebrew build may enable GPL parts (check `ffmpeg -L`). If you distribute an app that statically links FFmpeg, you must meet the LGPL terms yourself (provide the FFmpeg source and let recipients relink the app with a modified FFmpeg) | <https://ffmpeg.org> |
 
 ## Extra tools for on-device and verification scripts
 
@@ -77,6 +78,7 @@ These are already in the repository; nothing to download. Each keeps its license
 | `dm/third_party/libdeflate` | Decompression | MIT | <https://github.com/ebiggers/libdeflate> |
 | `dm/gfx/vulkan/engine/third_party/bcdec` | BC texture decompression in the Android Vulkan graphics layer (same project as the bcdec above, pinned separately) | MIT or Unlicense (your choice) | <https://github.com/iOrange/bcdec> |
 | `dm/gfx/vulkan/engine/third_party/pillow_reference` | Pillow's BC6 decoding reference tables, used only by the Vulkan graphics layer's tests | HPND (Pillow's license) | <https://github.com/python-pillow/Pillow> |
+| `dm/third_party/spirv-tools` | SPIRV-Tools optimizer library and the SPIR-V headers it includes, built into the Android package to inline shader helpers on the Adreno 750 family | Apache 2.0 (SPIR-V headers: Khronos MIT-style) | <https://github.com/KhronosGroup/SPIRV-Tools>, <https://github.com/KhronosGroup/SPIRV-Headers> |
 | `dm/third_party/ryujinx` | The shader translator from Ryujinx 1.3.2 (three projects, unmodified), which translates the original Switch shaders to SPIR-V | MIT | <https://github.com/Ryubing> |
 | `dm/gfx/nvn/include/nvn.h` | Graphics interface declarations | MIT | Author named in the file header |
 | Layout size algorithm in `dm/gfx/nvn/nvn_tex.c` | Ported from deko3d | zlib | <https://github.com/devkitPro/deko3d> |

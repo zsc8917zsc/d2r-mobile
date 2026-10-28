@@ -55,6 +55,7 @@ English: [DEPENDENCIES.md](DEPENDENCIES.md)
 |---|---|---|
 | astcenc | 给不支持 BC 贴图格式的旧机型（A16 及更早）转换贴图；从源码编，编法与整条做法见 [LEGACY_DEVICES.zh-CN.md](LEGACY_DEVICES.zh-CN.md)。我们用的是 v5.2.0 | <https://github.com/ARM-software/astc-encoder> |
 | hactool | 用 `dm/tools/extract_game.sh` 从你的游戏包取文件时要用；游戏文件已经用别的办法备好时不用装。我们实测用的是上游提交 `1d64a83` | <https://github.com/SciresM/hactool> |
+| FFmpeg | 可选的 VP8 过场播放，缺省不开；缺省构建和我们发布的包里都没有它。Mac（`MOVIE_FFMPEG=1`）：`brew install ffmpeg pkg-config`。iOS（`DM_MOVIE_FFMPEG=1`）：`dm/ios/tools/build_ffmpeg_ios.sh` 从 ffmpeg.org 下载官方 FFmpeg 7.1.1 源码包、核 SHA-256，只编 Matroska 解复用、VP8 解码和 swscale 的静态库，见 [dm/host/MOVIE.zh-CN.md](../dm/host/MOVIE.zh-CN.md)。许可证：这套配置没开 GPL 和 non-free 部分，编出的库是 LGPL 2.1 或更新版本；Homebrew 版可能开了 GPL 部分（用 `ffmpeg -L` 看）。如果你分发静态链接了 FFmpeg 的 App，LGPL 的义务要自己履行（提供 FFmpeg 源码，并让收到的人能换一份改过的 FFmpeg 重新链接） | <https://ffmpeg.org> |
 
 ## 真机与验证脚本额外需要
 
@@ -77,6 +78,7 @@ English: [DEPENDENCIES.md](DEPENDENCIES.md)
 | `dm/third_party/libdeflate` | 解压 | MIT | <https://github.com/ebiggers/libdeflate> |
 | `dm/gfx/vulkan/engine/third_party/bcdec` | 安卓 Vulkan 图形层里解压 BC 贴图（与上面的 bcdec 同源，单独固定了版本） | MIT 或 Unlicense（任选） | <https://github.com/iOrange/bcdec> |
 | `dm/gfx/vulkan/engine/third_party/pillow_reference` | Pillow 的 BC6 解码参考表，只用于 Vulkan 图形层的测试 | HPND（Pillow 的许可证） | <https://github.com/python-pillow/Pillow> |
+| `dm/third_party/spirv-tools` | SPIRV-Tools 的优化器库和它引用的 SPIR-V 头文件，编进安卓包，用来在 Adreno 750 这一族上内联着色器的辅助函数 | Apache 2.0（SPIR-V 头文件：Khronos 的 MIT 式许可） | <https://github.com/KhronosGroup/SPIRV-Tools>、<https://github.com/KhronosGroup/SPIRV-Headers> |
 | `dm/third_party/ryujinx` | Ryujinx 1.3.2 的着色器翻译库（三个项目，未修改），把 Switch 原版着色器翻译成 SPIR-V | MIT | <https://github.com/Ryubing> |
 | `dm/gfx/nvn/include/nvn.h` | 图形接口声明 | MIT | 文件头注明作者 |
 | `dm/gfx/nvn/nvn_tex.c` 中的排布尺寸算法 | 移植自 deko3d | zlib | <https://github.com/devkitPro/deko3d> |

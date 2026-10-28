@@ -8,6 +8,7 @@
 #   ② 裁剪（③）之后，补「未定格式」存储图像读写的能力（Ryujinx 不声明，见 add_format_caps）；
 #   ③ spirv-opt --trim-capabilities：Ryujinx 无条件声明 Float64 / GroupNonUniform* / DrawParameters 等，引擎只放行白名单、见到扩展即报错。其余不优化
 #     （quad / warp 改写器按 Ryujinx 原始写法匹配）。最后 spirv-val --target-env vulkan1.1。
+#   不在这里内联：Adreno 750 要的「辅助函数内联」由引擎在手机上载入时做（gfx-inline，见 xbg_adreno_policy.h），导入包对所有机型一样。
 # 绑定来源（贴图 / 采样器 / 存储缓冲槽、c0 / c2 驱动段、c1）与 dmsh_build.py 的 reflect() / decode_tex() 同一套解码。
 # 用法：dmsh_vk.py <Switch 包目录> <输出目录> [键…]     环境：XLATE（翻译器）、MAIN（main NSO）、J（并发）、SPIRV_OPT / SPIRV_VAL
 #       dmsh_vk.py --compare <参考 .xgs 目录> <本次输出目录>    逐个比字节：一致 / 不一致（不一致的再分 SPIR-V / 绑定表 / 其他）
@@ -20,6 +21,7 @@
 #   ② after trimming (③), add the capabilities for reading and writing storage images of unknown format (Ryujinx does not declare them, see add_format_caps);
 #   ③ spirv-opt --trim-capabilities: Ryujinx always declares Float64 / GroupNonUniform* / DrawParameters and others, while the engine allows only a whitelist and fails on any extension. No other optimization
 #     (the quad / warp rewriters match Ryujinx's original form). Finally spirv-val --target-env vulkan1.1.
+#   No inlining here: the helper inlining the Adreno 750 needs is done by the engine on the phone at load time (gfx-inline, see xbg_adreno_policy.h), so the import pack is the same for every phone.
 # Binding sources (texture / sampler / storage buffer slots, the c0 / c2 driver banks, c1) use the same decoding as reflect() / decode_tex() in dmsh_build.py.
 # Usage: dmsh_vk.py <Switch package directory> <output directory> [keys...]     environment: XLATE (translator), MAIN (main NSO), J (parallelism), SPIRV_OPT / SPIRV_VAL
 #        dmsh_vk.py --compare <reference .xgs directory> <output directory>    compare byte by byte: identical / different (the different ones split into SPIR-V / binding table / other)
@@ -29,6 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 DM_ROOT = os.environ.get('DM_ROOT') or os.path.expanduser('~/dm-work')
 OPT, VAL = (os.environ.get(k, d) for k, d in (('SPIRV_OPT', 'spirv-opt'), ('SPIRV_VAL', 'spirv-val')))
 STAGE_NO = {'vs': 0, 'hs': 1, 'ds': 2, 'gs': 3, 'ps': 4, 'cs': 5}
+
 TEX_BASE, SAMP_BASE, IMG_BASE = 0x168, 0x568, 0x120   # 同 dmsh_build.py：c[2] 贴图句柄表、采样器句柄表、图像句柄表 | as dmsh_build.py: the texture handle, sampler handle and image handle tables in c[2]
 
 

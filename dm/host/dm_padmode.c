@@ -66,20 +66,17 @@ static uint64_t g_tx_from;          // 本次事务开始的帧 | Frame at which
 static _Atomic uint32_t g_rebuilds; // 布局重建完成的次数：前端据此重认 HUD（技能钮快照的 HUD 集合按控件地址认，重建后全换了） | Number of completed layout rebuilds: the front end uses it to re-identify the HUD (the HUD set of the skill-button snapshot is identified by widget address, and they all change after a rebuild)
 uint32_t dm_padmode_rebuilds(void) { return atomic_load(&g_rebuilds); }
 
-// 手柄版的键帽（键位图标）样式：原版 Switch 键帽 / 键盘键帽（Mac App，玩家按了键盘）/ Xbox 键帽（玩家在用 Xbox 手柄，dm_gamepad.m 按手柄类型报）。
+// 手柄版的键帽（键位图标）样式：原版 Switch 键帽 / 键盘键帽（Mac App，玩家按了键盘）/ Xbox 键帽（玩家在用 Xbox 手柄，dm_gamepad.m 按手柄类型报）/ PlayStation 键帽（DualSense / DualShock 4，同样按手柄类型报）。
 // 手柄版布局不变，只把取键位图标的路径换到覆盖层里的另一套图，与触屏的透明键帽同目录：键盘「<平台>K<名字>」（ios/tools/kbd_glyphs.py）、
-// Xbox「<平台>X<名字>」（gen_romfs_overlay.py，原版 Xbox 那套按游戏键重排，见 dm_padmap.h dm_padmap_face_xbox）。覆盖层带哪套看标记文件 kbd_glyphs / xbox_glyphs。
+// Xbox「<平台>X<名字>」（gen_romfs_overlay.py，原版 Xbox 那套按游戏键重排，见 dm_padmap.h dm_padmap_face_xbox）、
+// PlayStation「<平台>P<名字>」（gen_romfs_overlay.py，原版 ps5 那套按游戏键重排；面键照 dm_padmap_face，下 ✕ = A）。覆盖层带哪套看标记文件 kbd_glyphs / xbox_glyphs / ps_glyphs。
 // 换图要让游戏重载布局，走的就是手柄 / 触屏那同一个切换事务（事务里的「模式」：第 0 位手柄版、往上是键帽样式 DM_GLYPH_*）。
-// Glyph (button-icon) styles of the controller layout: the original Switch glyphs / keyboard glyphs (Mac App, the player pressed a key) / Xbox glyphs (the player is using an Xbox controller; dm_gamepad.m reports the controller type).
-// The controller layout stays the same; only the path the button icons are read from moves to another set of images in the overlay, in the same directory as the transparent touch glyphs: keyboard "<platform>K<name>" (ios/tools/kbd_glyphs.py),
-// Xbox "<platform>X<name>" (gen_romfs_overlay.py, the original Xbox set rearranged by game button, see dm_padmap.h dm_padmap_face_xbox). Which sets the overlay carries is told by the marker files kbd_glyphs / xbox_glyphs.
-// Swapping the images needs the game to reload its layout, which goes through the same controller / touch switch transaction (the transaction's "mode": bit 0 = controller layout, the bits above = glyph style DM_GLYPH_*).
 #define GLYPH_OFF 0x1d0f5b8
-static const char *const k_glyph[DM_GLYPH_N] = { NULL, "Ztouch_controller_buttons_ui/%sK%s", "Ztouch_controller_buttons_ui/%sX%s" };
-static const char *const k_glyph_mark[DM_GLYPH_N] = { NULL, "kbd_glyphs", "xbox_glyphs" };
+static const char *const k_glyph[DM_GLYPH_N] = { NULL, "Ztouch_controller_buttons_ui/%sK%s", "Ztouch_controller_buttons_ui/%sX%s", "Ztouch_controller_buttons_ui/%sP%s" };
+static const char *const k_glyph_mark[DM_GLYPH_N] = { NULL, "kbd_glyphs", "xbox_glyphs", "ps_glyphs" };
 static int g_glyph_have[DM_GLYPH_N] = { 1 }, g_glyph, g_glyph_next;   // 覆盖层带哪几套；当前路径指着哪套；下一次写路径时指哪套 | Which sets the overlay carries; which set the current path points at; which set the next path write points at
 static _Atomic int g_glyph_want;
-static const char *const k_glyph_name[DM_GLYPH_N] = { "Switch", "keyboard", "Xbox" };   // 日志用 | For the log
+static const char *const k_glyph_name[DM_GLYPH_N] = { "Switch", "keyboard", "Xbox", "PlayStation" };   // 日志用 | For the log
 #if TARGET_OS_OSX
 static int g_app;   // Mac App 形态 | the overlay carries keyboard key caps; the current path points at keyboard key caps; whether the next path write should point at keyboard key caps; Mac App form
 #endif
@@ -96,7 +93,7 @@ static int glyph_swap_ok(uint8_t *b) {
 }
 static int pfx_write(uint8_t *b, int pad) {
     for (unsigned i = 0; i < sizeof k_pfx / sizeof *k_pfx; i++) { const char *p = (const char *)(b + k_pfx[i].off);
-        if (k_pfx[i].off == GLYPH_OFF && (!strcmp(p, k_glyph[DM_GLYPH_KBD]) || !strcmp(p, k_glyph[DM_GLYPH_XBOX]))) continue;
+        if (k_pfx[i].off == GLYPH_OFF) { int g = 1; while (g < DM_GLYPH_N && strcmp(p, k_glyph[g])) g++; if (g < DM_GLYPH_N) continue; }   // 正指着某套换过的键帽
         if (strcmp(p, k_pfx[i].pad) && strcmp(p, k_pfx[i].touch)) { LOG("【红】手柄 / 触屏布局：main+%#x 不是预期的「%s」（是「%.32s」），不改", k_pfx[i].off, k_pfx[i].pad, p); return 0; } }
     for (unsigned i = 0; i < sizeof k_pfx / sizeof *k_pfx; i++) memcpy(b + k_pfx[i].off, pad ? k_pfx[i].pad : k_pfx[i].touch, strlen(k_pfx[i].pad));
     _Static_assert(sizeof "Ztouch_controller_buttons_ui/%sK%s" == sizeof "Controller/ControllerButtons/%s/%s", "换的键帽路径要与原版路径等长");
@@ -166,7 +163,8 @@ void dm_padmode_boot(void) {   // 开机：游戏建面板之前（main.c，nnMa
     g_glyph_have[DM_GLYPH_KBD] = pad && dm_overlay_file(k_glyph_mark[DM_GLYPH_KBD], mk, sizeof mk);   // 键盘键帽只有 Mac App 用 | Keyboard glyphs are used only by the Mac App
     g_glyph_have[DM_GLYPH_XBOX] = dm_overlay_file(k_glyph_mark[DM_GLYPH_XBOX], mk, sizeof mk);
     g_glyph = g_glyph_next = g_glyph_have[DM_GLYPH_KBD] ? DM_GLYPH_KBD : DM_GLYPH_PAD; atomic_store(&g_glyph_want, g_glyph);   // Mac App 开机先用键盘键帽（多数人没接手柄）；实体手柄一有输入就按它的类型换 | The Mac App starts with keyboard glyphs (most people have no controller connected); as soon as a physical controller gives input, switch by its type
-    LOG("手柄 / 触屏布局：键帽 键盘 %d、Xbox %d", g_glyph_have[DM_GLYPH_KBD], g_glyph_have[DM_GLYPH_XBOX]);
+    g_glyph_have[DM_GLYPH_PS] = dm_overlay_file(k_glyph_mark[DM_GLYPH_PS], mk, sizeof mk);
+    LOG("手柄 / 触屏布局：键帽 键盘 %d、Xbox %d、PlayStation %d", g_glyph_have[DM_GLYPH_KBD], g_glyph_have[DM_GLYPH_XBOX], g_glyph_have[DM_GLYPH_PS]);
     if (pfx_write((uint8_t *)m->base, pad)) { g_have = 1; g_cur = pad; atomic_store(&g_want, pad); g_b = (uint8_t *)m->base; str_load(); LOG("手柄 / 触屏布局：开机用%s", pad ? "原版手柄版（Mac App）" : "触屏版（layouts/xtouch_lay 等三个目录）"); }
 }
 void dm_padmode_request(int pad) { pad = pad ? 1 : 0;
@@ -323,10 +321,10 @@ void dm_padmode_legend(int act, const char *text) {   // 游戏主线程，页�
 // Which legend the entry is on: this page's own legend widget (found by name, e.g. CharacterOptionsLegend on the character creation mode page), not the one at the bottom in a run
 static struct { const char *legend; int act; } g_lh[4]; static int g_lh_n; static uint64_t g_lh_frame;
 void dm_padmode_legend_hide(const char *legend, int act) { uint64_t f = dm_guest_frame(); if (f != g_lh_frame) { g_lh_frame = f; g_lh_n = 0; } if (g_lh_n < 4) { g_lh[g_lh_n].legend = legend; g_lh[g_lh_n].act = act; g_lh_n++; } }
-static uint64_t legend_obj(uint8_t *b) {
+static uint64_t legend_obj(uint8_t *b, int hidden_too) {
     uint64_t root = rd8((uint64_t)(uintptr_t)(b + 0x2f05458)), ch = root ? rd8(root + 0x58) : 0, n = root ? rd8(root + 0x60) : 0;
     for (uint64_t i = 0; ch && i < n && i < 256; i++) { uint64_t w = rd8(ch + 8 * i); const char *nm = w ? (const char *)(uintptr_t)rd8(w + 8) : NULL;
-        if (nm && !strcmp(nm, "ControllerOverlay")) return *(uint8_t *)(uintptr_t)(w + 0x50) ? rd8(w + 0x440) : 0; }
+        if (nm && !strcmp(nm, "ControllerOverlay")) return *(uint8_t *)(uintptr_t)(w + 0x50) || hidden_too ? rd8(w + 0x440) : 0; }
     return 0;
 }
 static void legend_free(uint8_t *b, uint64_t *ent) {   // 条目里的串超过 15 字节时是原版分配器分配的：照原版调用点用完释放 | When the string in an entry exceeds 15 bytes it was allocated by the original allocator: free it after use as the original call sites do
@@ -427,11 +425,20 @@ static void legend_pump(uint8_t *b, uint64_t frame) {   // 游戏主线程每帧
       if (!off || frame < (uint64_t)off) for (int i = 0; i < n; i++) dm_padmode_legend(tv[i].a, tv[i].t); }
     if (g_cur && frame - g_lh_frame <= 2) for (int i = 0; i < g_lh_n; i++) { uint64_t w = pm_find(rd8((uint64_t)(uintptr_t)(b + 0x2f05458)), g_lh[i].legend, 0);
         if (w && legend_find(b, w, g_lh[i].act)) { ((void (*)(uint64_t, int))(b + 0xaaa610))(w, g_lh[i].act); static int lgd; if (lgd++ < 8) LOG("手柄提示条：%s 上原版的动作 %d 那一条拿掉（这一页把这个键收掉了）", g_lh[i].legend, g_lh[i].act); } }
-    uint64_t lg = g_cur ? legend_obj(b) : 0; if (!lg) { g_lg_on_n = 0; return; }   // 提示条不在屏上（面板关了 / 回触屏模式）：原版自己会重建，记的清掉 | Button legend not on screen (panel closed / back to touch mode): the original rebuilds it by itself, so clear what we recorded
+    uint64_t lg = g_cur ? legend_obj(b, 0) : 0; if (!lg) {   // 提示条不在屏上（面板关了 / 回触屏模式）：控件还在、只是藏着。我们加的条目当场从它上面删掉再清记录——原版重新填条目时不删我们的，残留会把条目数顶过 8（见下面追加处） | Button legend not on screen (panel closed / back to touch mode): the widget still exists, only hidden. Remove the entries we added from it right away, then clear the record -- when the original refills the legend it does not remove ours, and leftovers push the count past 8 (see the append below)
+        uint64_t hid = g_lg_on_n ? legend_obj(b, 1) : 0;
+        for (int k = 0; hid && k < g_lg_on_n; k++) { uint64_t e = legend_find(b, hid, g_lg_on[k].act); if (e && legend_ours(e, g_lg_on[k].text)) ((void (*)(uint64_t, int))(b + 0xaaa610))(hid, g_lg_on[k].act); }
+        g_lg_on_n = 0; return; }
     int live = frame - g_lg_frame <= 2 ? g_lg_n : 0;   /* 页的声明与这里谁先谁后不定：两帧内声明过都算在屏上 | The order between a page's declaration and this code is not fixed: anything declared within the last two frames counts as on screen */
     for (int k = 0; k < g_lg_on_n; k++) { int keep = 0; for (int i = 0; i < live; i++) keep |= g_lg[i].act == g_lg_on[k].act;   // 上一轮加过、这一轮不再声明的：删 | Added last round and no longer declared this round: remove
         if (!keep) { uint64_t e = legend_find(b, lg, g_lg_on[k].act); if (e && legend_ours(e, g_lg_on[k].text)) ((void (*)(uint64_t, int))(b + 0xaaa610))(lg, g_lg_on[k].act); } }
     for (int i = 0; i < live; i++) { tot++; uint64_t e = legend_find(b, lg, g_lg[i].act); if (e && legend_ours(e, g_lg[i].text)) continue; miss++;
+        // 原版提示条只有 8 个排版槽（+0x680 起每个 0x230，到 +0x1800 为止），重排时不查上限：第 9 条越界读、在 main+0x390b44 崩（佣兵栏 + 背包时）。
+        //   已有同一键帽的只换字不加条；要新加且已满 8 条就不加。
+        // The original legend has only 8 layout slots (0x230 each from +0x680, ending at +0x1800) and its relayout does not check the
+        //   bound: a 9th entry is read out of bounds and crashes at main+0x390b44 (mercenary page + inventory). An existing entry with the
+        //   same keycap only has its text replaced; a new one is not added once there are 8.
+        if (!e && rd8(lg + 0x90) >= 8) { static int full; if (full++ < 8) LOG("手柄提示条：已有 %llu 条，动作 %d「%s」不再加（原版只排得下 8 条）", (unsigned long long)rd8(lg + 0x90), g_lg[i].act, g_lg[i].text); continue; }
         uint64_t ent[8] = { 0 }; struct { const char *p; uint64_t n; } sv = { g_lg[i].text, strlen(g_lg[i].text) };
         ((void (*)(void *, int, int, void *))(b + 0xaa9358))(ent, g_lg[i].act, 0, &sv); ((void (*)(uint64_t, void *))(b + 0xaa9ef4))(lg, ent); legend_free(b, ent); }
     g_lg_on_n = live; memcpy(g_lg_on, g_lg, sizeof g_lg[0] * (size_t)live);
@@ -480,8 +487,7 @@ void dm_padmode_step(uint8_t *b, uint64_t frame) {   // 游戏主线程每帧（
     if (g_glyph_have[DM_GLYPH_KBD] && frame % 10 == 0) { int kb = g_glyph == DM_GLYPH_KBD; uint64_t root = rd8((uint64_t)(uintptr_t)(b + 0x2f05458)), a = root ? pm_find(root, "TouchBlissKey", 0) : 0, k = a ? pm_find(root, "TouchBlissKeyK", 0) : 0;
         for (int i = 0; i < 2 && a && k; i++) { uint64_t w = i ? k : a; int32_t *r = (int32_t *)(uintptr_t)(w + 0x70), x = (i ? kb : !kb) ? -1665 : 99999; if (r[0] != x) { r[0] = x; ((void (*)(uint64_t))rd8(rd8(w) + 0x10))(w); } } }
 #endif
-    // 测试开关 DM_TEST_GLYPH=<帧>:<样式>[,…]：到帧当作「这一种输入来了」请求键帽样式（0 Switch 手柄 / 1 键盘 / 2 Xbox 手柄；无人值守的局没有实体手柄与键盘）
-    // Test switch DM_TEST_GLYPH=<frame>:<style>[,...]: at that frame, act as if that kind of input arrived and request the glyph style (0 Switch controller / 1 keyboard / 2 Xbox controller; unattended runs have no physical controller or keyboard)
+    // 测试开关 DM_TEST_GLYPH=<帧>:<样式>[,…]：到帧当作「这一种输入来了」请求键帽样式（0 Switch 手柄 / 1 键盘 / 2 Xbox 手柄 / 3 PlayStation 手柄；无人值守的局没有实体手柄与键盘）
     { static int n = -1, k; static struct { uint64_t f; int m; } ev[8];
       if (n < 0) { n = 0; const char *e = getenv("DM_TEST_GLYPH"); for (const char *q = e; q && *q && n < 8; ) { unsigned long long f; int m; if (sscanf(q, "%llu:%d", &f, &m) != 2) break; ev[n].f = f; ev[n].m = m; n++; q = strchr(q, ','); if (q) q++; } }
       if (k < n && frame >= ev[k].f) { LOG("DM_TEST_GLYPH：帧 %llu 请求键帽样式 %d", (unsigned long long)frame, ev[k].m); dm_padmode_request_glyph(ev[k].m); k++; } }
